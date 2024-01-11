@@ -53,10 +53,15 @@ app.use(requestIp.mw());
 
 app.get("/", async (req, res) => {
     try {
-        const userIP = req.clientIp;
-        // console.log(userIP)
+        const publicIP = req.clientIp;
+        const localIP = req.connection.remoteAddress;
 
-        res.json({ status: true, message: 'Successfully got IP', userIP });
+        res.json({
+            status: true,
+            message: 'Successfully got IPs',
+           publicIp: publicIP,
+           PrivateDeviceIP: localIP,
+        });
     } catch (error) {
         console.error("Error:", error);
         res.status(500).json({ message: "Something went wrong", status: 500 });
@@ -66,3 +71,9 @@ app.get("/", async (req, res) => {
 app.listen(port, () => {
     console.log(`App listening on port ${port}`);
 });
+
+
+
+
+
+
