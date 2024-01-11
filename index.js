@@ -134,7 +134,7 @@ app.listen(port, () => {
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
- 
+ const path = require("path")
 const app = express();
 
 const port = process.env.PORT || 5000;
@@ -143,56 +143,42 @@ app.use(cors({ origin: "*" }));
 
 // IP Service
 
-const { v4: uuidv4 } = require('uuid');
-const fs = require('fs');
-const os = require('os');
+const deviceIdentifiersByIP = new Map();
 
-const uuidFilePath = 'device_uuid.txt';
+app.use(express.json());
+app.use(cors({ origin: '*' }));
 
-let deviceIdentifier;
 
-// Read the device identifier from a file, or generate a new one
-try {
-    deviceIdentifier = fs.readFileSync(uuidFilePath, 'utf8');
-} catch (err) {
-    deviceIdentifier = uuidv4();
-    fs.writeFileSync(uuidFilePath, deviceIdentifier);
-}
+app.get("/", async(req, res)=>{
+    res.sendFile(path.join(__dirname , "new.html"))
+})
 
-// Get the local IP address of the device
-const localIPAddress = getLocalIPAddress();
 
-console.log('Device Identifier:', deviceIdentifier);
-console.log('Local IP Address:', localIPAddress);
 
-function getLocalIPAddress() {
-    const networkInterfaces = os.networkInterfaces();
-    
-    for (const interfaceName in networkInterfaces) {
-        const interfaces = networkInterfaces[interfaceName];
+app.post("/ipAddress", async (req, res) => {
+    try {
+        const deviceIdentifier = req.body.deviceIdentifier;
+        const clientIPAddress = req.body.clientIPAddress;
+ 
+        // Your logic to handle the device identifier and client IP address
+        console.log('Device Identifier:', deviceIdentifier);
+        console.log('Client IP Address:', clientIPAddress);
 
-        for (const iface of interfaces) {
-            if (iface.family === 'IPv4' && !iface.internal) {
-                return iface.address;
-            }
-        }
+        // Send a response back to the client
+        res.json({
+            status: true,
+            message: 'Received device identifier and client IP address successfully.',
+            deviceIdentifier:deviceIdentifier,
+            clientIPAddress:clientIPAddress
+        });
+    } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ message: "Something went wrong", status: 500 });
     }
-
-    return null;
-}
-
-// Rest of your server setup...
-
-// Example route using the device identifier and local IP address
-app.get('/', (req, res) => {
-    res.json({ deviceIdentifier, localIPAddress });
 });
-
-
-
-
-
 
 app.listen(port, () => {
     console.log(`App listening on port ${port}`);
 });
+
+
