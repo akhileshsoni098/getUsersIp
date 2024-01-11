@@ -132,23 +132,69 @@ app.listen(port, () => {
 
 
 require("dotenv").config();
-var ip = require('ip');
-
 const express = require("express");
-const app = express()
 const cors = require("cors");
+const axios = require("axios");
 
+const app = express();
 
-app.use(express.json());
+const port = process.env.PORT || 5000;
 
 app.use(cors({ origin: "*" }));
 
-app.get("/",function(req,res){
-    res.end("Your IP address is " + ip.address());
-})
+// IP Service
 
-const PORT = process.env.PORT || 3000;
+const getIPDetailsService = async (ip_address) => {
+	try {
+		const response = await axios.get(`http://ip-api.com/json/${ip_address}?fields=status,message,continent,continentCode,country,countryCode,region,regionName,city,district,zip,lat,lon,timezone,offset,currency,isp,org,as,mobile,proxy,hosting,query`);
+console.log(response)
+		if (response.status === 200 && response.data.status === "success") {
+			return { data: response.data, status: 200 };
+		} else {
+			throw new Error("API request failed");
+		}
+	} catch (error) {
+		console.error("Error:", error.message);
+		return { message: "Something went wrong", status: 500 };
+	}
+};
 
-app.listen(PORT, () => {
-    console.log("Server running on port number" + PORT);
+// IP Controller
+
+const getIPDetails = async (req, res) => {
+
+	res.setHeader("Content-Type", "application/json");
+
+	const { ip_address } = req.params;
+	try {
+		const result = await getIPDetailsService(ip_address);
+
+		return res.json(result);
+	} catch (error) {
+		console.error("Error:", error);
+		return res.status(500).json({ message: "Something went wrong", status: 500 });
+	}
+};
+
+// Routes
+
+const router = express.Router();
+
+
+router.get("/get-details/:ip_address", getIPDetails);
+
+// Main route for getting user IP
+
+router.get("/", (req, res) => {
+	const ip = req.headers["x-forwarded-for"] || req.ip || req.socket.localAddress;
+	console.log("IP:", ip);
+	res.json({ ip });
+});
+
+// App setup
+
+app.use(router);
+
+app.listen(port, () => {
+	console.log(`App listening on port ${port}`);
 });
