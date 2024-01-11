@@ -145,6 +145,7 @@ app.use(cors({ origin: "*" }));
 
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
+const os = require('os');
 
 const uuidFilePath = 'device_uuid.txt';
 
@@ -158,19 +159,40 @@ try {
     fs.writeFileSync(uuidFilePath, deviceIdentifier);
 }
 
+// Get the local IP address of the device
+const localIPAddress = getLocalIPAddress();
+
 console.log('Device Identifier:', deviceIdentifier);
+console.log('Local IP Address:', localIPAddress);
+
+function getLocalIPAddress() {
+    const networkInterfaces = os.networkInterfaces();
+    
+    for (const interfaceName in networkInterfaces) {
+        const interfaces = networkInterfaces[interfaceName];
+
+        for (const iface of interfaces) {
+            if (iface.family === 'IPv4' && !iface.internal) {
+                return iface.address;
+            }
+        }
+    }
+
+    return null;
+}
 
 // Rest of your server setup...
 
-// Example route using the device identifier
+// Example route using the device identifier and local IP address
 app.get('/', (req, res) => {
-    res.json({ deviceIdentifier });
+    res.json({ deviceIdentifier, localIPAddress });
 });
 
-// Rest of your server setup...
+
+
+
+
 
 app.listen(port, () => {
     console.log(`App listening on port ${port}`);
 });
-
-
