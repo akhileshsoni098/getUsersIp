@@ -129,11 +129,13 @@ app.listen(port, () => {
 });
  */
 
+
+
 require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
-const os = require("os");
+const requestIp = require("request-ip");
 
 const app = express();
 
@@ -142,10 +144,13 @@ const port = process.env.PORT || 5000;
 app.use(express.json());
 app.use(cors({ origin: "*" }));
 
+// Middleware to get client IP address
+app.use(requestIp.mw());
+
 app.get("/", async (req, res) => {
     try {
-        const publicIP = req.clientIp;
-        const localIP = getClientLocalIPv6();
+        const publicIP = req.clientIp; // Public IP address
+        const localIP = req.connection.remoteAddress; // Local IP address
 
         res.json({
             status: true,
@@ -158,23 +163,6 @@ app.get("/", async (req, res) => {
         res.status(500).json({ message: "Something went wrong", status: 500 });
     }
 });
-
-function getClientLocalIPv6() {
-    const networkInterfaces = os.networkInterfaces();
-
-    for (const interfaceName in networkInterfaces) {
-        const interfaces = networkInterfaces[interfaceName];
-        
-        for (const iface of interfaces) {
-            // Check for IPv6 and not a loopback address
-            if (iface.family === 'IPv6' && !iface.internal) {
-                return iface.address;
-            }
-        }
-    }
-
-    return null;
-}
 
 app.listen(port, () => {
     console.log(`App listening on port ${port}`);
