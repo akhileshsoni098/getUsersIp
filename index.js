@@ -134,8 +134,7 @@ app.listen(port, () => {
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const axios = require("axios");
-
+ 
 const app = express();
 
 const port = process.env.PORT || 5000;
@@ -144,57 +143,34 @@ app.use(cors({ origin: "*" }));
 
 // IP Service
 
-const getIPDetailsService = async (ip_address) => {
-	try {
-		const response = await axios.get(`http://ip-api.com/json/${ip_address}?fields=status,message,continent,continentCode,country,countryCode,region,regionName,city,district,zip,lat,lon,timezone,offset,currency,isp,org,as,mobile,proxy,hosting,query`);
-console.log(response)
-		if (response.status === 200 && response.data.status === "success") {
-			return { data: response.data, status: 200 };
-		} else {
-			throw new Error("API request failed");
-		}
-	} catch (error) {
-		console.error("Error:", error.message);
-		return { message: "Something went wrong", status: 500 };
-	}
-};
+const { v4: uuidv4 } = require('uuid');
+const fs = require('fs');
 
-// IP Controller
+const uuidFilePath = 'device_uuid.txt';
 
-const getIPDetails = async (req, res) => {
+let deviceIdentifier;
 
-	res.setHeader("Content-Type", "application/json");
+// Read the device identifier from a file, or generate a new one
+try {
+    deviceIdentifier = fs.readFileSync(uuidFilePath, 'utf8');
+} catch (err) {
+    deviceIdentifier = uuidv4();
+    fs.writeFileSync(uuidFilePath, deviceIdentifier);
+}
 
-	const { ip_address } = req.params;
-	try {
-		const result = await getIPDetailsService(ip_address);
+console.log('Device Identifier:', deviceIdentifier);
 
-		return res.json(result);
-	} catch (error) {
-		console.error("Error:", error);
-		return res.status(500).json({ message: "Something went wrong", status: 500 });
-	}
-};
+// Rest of your server setup...
 
-// Routes
-
-const router = express.Router();
-
-
-router.get("/get-details/:ip_address", getIPDetails);
-
-// Main route for getting user IP
-
-router.get("/", (req, res) => {
-	const ip = req.headers["x-forwarded-for"] || req.ip || req.socket.localAddress;
-	console.log("IP:", ip);
-	res.json({ ip });
+// Example route using the device identifier
+app.get('/', (req, res) => {
+    res.json({ deviceIdentifier });
 });
 
-// App setup
-
-app.use(router);
+// Rest of your server setup...
 
 app.listen(port, () => {
-	console.log(`App listening on port ${port}`);
+    console.log(`App listening on port ${port}`);
 });
+
+
