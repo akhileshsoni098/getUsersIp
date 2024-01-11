@@ -149,14 +149,15 @@ app.use(requestIp.mw());
 
 app.get("/", async (req, res) => {
     try {
-        const publicIP = req.clientIp; // Public IP address
-        const localIP = req.connection.remoteAddress; // Local IP address
+        const publicIPv4 = req.clientIp.split(',')[0]; // Extract IPv4 address
+        const publicIPv6 = req.headers['x-forwarded-for'] || req.socket.remoteAddress; // Extract IPv6 address
+
+        const uniqueDeviceIdentifier = `${publicIPv4}-${publicIPv6}`;
 
         res.json({
             status: true,
             message: 'Successfully got IPs',
-            publicIP,
-            localIP,
+            uniqueDeviceIdentifier,
         });
     } catch (error) {
         console.error("Error:", error);
