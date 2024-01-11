@@ -82,7 +82,8 @@ app.listen(port, () => {
  */
 
 
-
+///////////////////////////////////////////////////////////
+/* 
 require("dotenv").config();
 
 const express = require("express");
@@ -121,6 +122,58 @@ function getClientLocalIP(req) {
 
     
     return ipv4.includes('::1') ? ipv6 : ipv4;
+}
+
+app.listen(port, () => {
+    console.log(`App listening on port ${port}`);
+});
+ */
+
+require("dotenv").config();
+
+const express = require("express");
+const cors = require("cors");
+const os = require("os");
+
+const app = express();
+
+const port = process.env.PORT || 5000;
+
+app.use(express.json());
+app.use(cors({ origin: "*" }));
+
+app.get("/", async (req, res) => {
+    try {
+        const publicIP = req.clientIp;
+        const localIP = getClientLocalIPv6();
+
+        res.json({
+            status: true,
+            message: 'Successfully got IPs',
+            publicIP,
+            localIP,
+        });
+    } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ message: "Something went wrong", status: 500 });
+    }
+});
+
+function getClientLocalIPv6() {
+    const networkInterfaces = os.networkInterfaces();
+
+    for (const interfaceName in networkInterfaces) {
+        const interfaces = networkInterfaces[interfaceName];
+        
+        for (const iface of interfaces) {
+            // Check for IPv6 and not a loopback address
+            if (iface.family === 'IPv6' && !iface.internal) {
+                return iface.address;
+            }
+        }
+    }
+
+    return null;
 }
 
 app.listen(port, () => {
